@@ -58,31 +58,33 @@ where $S^2$ is the variance of the variable, $x_i$ represents each value of the 
 
 %\autoref{lst:variance}.
 \begin{lstlisting}[label=lst:variance,language=R,caption=RStudio script to calculate the variance of each numerical and categorical variables in the final dataset.]
-# Import data from the CSV file
-Data <- read.csv(file="Final_Data_Article.csv", header=TRUE, sep=";")
+# Import data
+Data <- read.csv(file="SciPy_2024_data_preprocessing.csv", header=TRUE)
+
+# Exclude specific columns
+Data <- Data[ , !(names(Data) %in% c("Field_id", "Family", "Genus", "Scientific_name"))]
 
 # Define a function to calculate entropy for categorical variables
 calculate_entropy <- function(x) {
   # Calculate the frequency of each category
   freq_table <- table(x)
-
+  
   # Calculate probabilities
   probabilities <- freq_table / sum(freq_table)
-
+  
   # Calculate entropy using the probabilities
-  entropy_value <- -sum(probabilities*log(probabilities), na.rm=TRUE)
-
+  entropy_value <- -sum(probabilities * log(probabilities), na.rm=TRUE)
+  
   return(entropy_value)
 }
 
-# Calculate variance
-variances <- sapply(Data, function(x) {
-  # Check if the column is numeric
+# Calculate variance or entropy based on column type
+variances_entropies <- sapply(Data, function(x) {
   if (is.numeric(x)) {
-    # Compute variance, excluding NA values
+    # Compute variance for numeric columns
     var(x, na.rm=TRUE)
   } else if (is.factor(x) || is.character(x)) {
-    # If the column is categorical, compute entropy
+    # Compute entropy for categorical columns
     calculate_entropy(x)
   } else {
     NA  # Return NA for other types of columns
@@ -90,7 +92,7 @@ variances <- sapply(Data, function(x) {
 })
 
 # Display variances/entropies
-print(variances)
+print(variances_entropies)
 \end{lstlisting}
 
 We calculated the Pearson correlation ($r$) between numerical variables in RStudio Desktop 4.3.2. Variables exhibiting solid correlations with each other (threshold > 0.90) were removed to avoid repetition and guarantee variable independence. We considered the threshold of > 0.90 to be an adequate compromise between preserving properties for the analyses and eliminating the repetition of information in the data. Since we have three missing data for O\textsubscript{2} concentration (mg/L), we have used the "pairwise.complete.obs method". This method calculates the Pearson correlation matrix using all accessible pairs of observations, even if some data are missing. Using the above threshold, three variables were discarded: latitude at the start of sampling (decimal degree, DD) (Lat_start_end: $r = 0.9996658$), longitude at the end of sampling (DD) (Long_start_end: $r = 0.9999979$), and depth at the end of sampling (m) (Depth_start_end: $r = 0.9998579$). The decision to remove these variables was based on their variance ($S^2$) value: $S^2_\text{Lat\_start} = 10.03077 \text{DD}^2$ and $S^2_\text{Lat\_end} = 10.71335 \text{DD}^2$; $S^2_\text{Long\_start} = 30.47940 \text{DD}^2$ and $S^2_\text{Long\_end} = 30.47574 \text{DD}^2$; $S^2_\text{Depth\_start} = 776437.1 \text{m}^2$ and $S^2_\text{Depth\_end} = 775394.7 \text{m}^2$. The formula (see Equation \ref{pearson}) and code (\autoref{lst:pearson}) used to calculate the Pearson correlation coefficient between the final numerical variables are shown below:
@@ -104,7 +106,7 @@ where $r$ is the Pearson correlation coefficient between two variables, $x_i$ ar
 %\autoref{lst:pearson}.
 \begin{lstlisting}[label=lst:pearson,language=R,caption=RStudio script to calculate the Pearson correlation coefficient between all the numerical variables in the final dataset.]
 # Import data
-Data <- read.csv(file="Final_Data_Article.csv", header=TRUE, sep=";")
+Data <- read.csv(file="SciPy_2024_data_preprocessing.csv", header=TRUE)
 
 # Select numeric columns only from the dataset
 numeric_Data <- Data[sapply(Data, is.numeric)]
